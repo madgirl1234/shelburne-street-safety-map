@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shelburne Street Safety Map</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18212f;
+      --muted: #5b6472;
+      --paper: #fffaf2;
+      --panel: rgba(255, 255, 255, 0.96);
+      --line: #d8cfc0;
+      --red: #b91c1c;
+      --orange: #e26d19;
+      --gold: #c48a14;
+      --blue: #2563eb;
+      --green: #16784f;
+      --purple: #7357d1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #f5f0e8;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(280px, clamp(300px, 32vw, 420px)) minmax(0, 1fr);
+      height: 100vh;
+      min-height: 720px;
+    }
+
+    aside {
+      overflow: auto;
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+      padding: 22px 20px 26px;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 720px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 22px 0 10px;
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6c4a16;
+    }
+
+    p {
+      margin: 10px 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .lede {
+      font-size: 15px;
+      color: #283243;
+    }
+
+    .intro-list {
+      margin: 14px 0 16px;
+      padding-left: 18px;
+      display: grid;
+      gap: 6px;
+      color: #283243;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      background: #fffefb;
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 74px;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+      color: #812020;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 6px;
+      font-size: 11px;
+      line-height: 1.25;
+      color: var(--muted);
+    }
+
+    .segment-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .segment-card {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-left: 6px solid var(--blue);
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 10px 10px 10px 12px;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(24, 33, 47, 0.05);
+    }
+
+    .segment-card:hover,
+    .segment-card:focus {
+      outline: 2px solid rgba(37, 99, 235, 0.25);
+      outline-offset: 1px;
+    }
+
+    .segment-card.active {
+      border-color: #8b1a1a;
+      background: #fff7ed;
+      box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.15);
+    }
+
+    .segment-card strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.25;
+      color: var(--ink);
+    }
+
+    .segment-card span {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .commute-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .commute-button {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-left: 6px solid #0f7a8a;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: var(--ink);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(24, 33, 47, 0.05);
+    }
+
+    .commute-button:hover,
+    .commute-button:focus {
+      outline: 2px solid rgba(15, 122, 138, 0.24);
+      outline-offset: 1px;
+    }
+
+    .commute-button strong {
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .commute-button span {
+      flex: 0 0 auto;
+      color: #0f7a8a;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #303b4c;
+    }
+
+    .legend-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .legend-row.legend-jump {
+      width: 100%;
+      padding: 2px 4px;
+      margin-left: -4px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .legend-row.legend-jump:hover,
+    .legend-row.legend-jump:focus {
+      border-color: #d8cfc0;
+      background: #fffefb;
+      outline: none;
+    }
+
+    .legend-subhead {
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6c4a16;
+    }
+
+    .legend-pin {
+      min-width: 44px;
+      height: 24px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 2px solid var(--green);
+      color: var(--green);
+      font-size: 10px;
+      line-height: 12px;
+      font-weight: 800;
+      text-align: center;
+      flex: 0 0 auto;
+    }
+
+    .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex: 0 0 16px;
+    }
+
+    .swatch.line {
+      height: 5px;
+      border-radius: 4px;
+    }
+
+    .swatch.line.dashed {
+      background-image: repeating-linear-gradient(
+        90deg,
+        currentColor 0 6px,
+        transparent 6px 10px
+      );
+      background-color: transparent !important;
+      color: var(--blue);
+    }
+
+    .note {
+      border: 1px solid #ead7b7;
+      background: #fff7e8;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #5e431c;
+    }
+
+    .note h2 {
+      margin: 0 0 8px;
+    }
+
+    .note-list {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .note-list li {
+      padding-left: 2px;
+    }
+
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+    }
+
+    .popup {
+      width: 255px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .popup h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .popup b {
+      color: #111827;
+    }
+
+    .kid-marker {
+      min-width: 34px;
+      height: 24px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 2px solid var(--green);
+      color: var(--green);
+      font-weight: 800;
+      font-size: 10px;
+      line-height: 12px;
+      text-align: center;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.22);
+      white-space: nowrap;
+    }
+
+    .kid-marker.school {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    .kid-marker.assigned {
+      background: #fff4d6;
+      border-color: #b45309;
+      color: #7c2d12;
+    }
+
+    .kid-marker.priority-public {
+      background: #eaf2ff;
+      border-color: #1d4ed8;
+      color: #123a8c;
+    }
+
+    .kid-marker.public-school {
+      border-color: #1d4ed8;
+      color: #1d4ed8;
+    }
+
+    .kid-marker.private-school {
+      border-color: #8b5cf6;
+      color: #5b21b6;
+    }
+
+    .kid-marker.library {
+      border-color: var(--gold);
+      color: #7a520b;
+    }
+
+    .kid-marker.population {
+      border-color: #0f766e;
+      color: #0f766e;
+    }
+
+    .band-label {
+      min-width: 92px;
+      max-width: 132px;
+      padding: 5px 7px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 2px solid #8b1a1a;
+      color: #18212f;
+      font-size: 10px;
+      line-height: 1.12;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+      white-space: normal;
+    }
+
+    .band-label span {
+      display: block;
+      margin-top: 2px;
+      color: #7f1d1d;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .route-label {
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 2px solid #0f7a8a;
+      color: #0f4f5d;
+      font-size: 10px;
+      font-weight: 800;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+      white-space: nowrap;
+    }
+
+    .comparison-marker {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #eefbf4;
+      border: 2px solid #16784f;
+      color: #12372a;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 800;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      aside {
+        max-height: none;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      #map {
+        height: 70vh;
+        min-height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <aside>
+      <h1>Shelburne Street Safety Map</h1>
+      <ul class="intro-list">
+        <li><b>What this shows:</b> 2021-2025 crash locations, injury counts, school anchors, and child destinations around Shelburne.</li>
+        <li><b>Why it matters:</b> Children need to cross or move near high-crash streets to reach schools, parks, fields, library, and errands.</li>
+        <li><b>How to read it:</b> Red circles are crash locations; red bands summarize corridors; green labels mark schools, parks, fields, and everyday destinations.</li>
+      </ul>
+
+      <div class="stats">
+        <div class="stat"><b>285</b><span>crashes at mapped corridor locations, 2021-2025</span></div>
+        <div class="stat"><b>103</b><span>people injured in those mapped crashes</span></div>
+        <div class="stat"><b>~2,700</b><span>nearby residents used for scale</span></div>
+        <div class="stat"><b>~650</b><span>estimated children, using Shaker's under-18 share</span></div>
+      </div>
+
+      <div class="note">
+        <h2>Key Context</h2>
+        <ul class="note-list">
+          <li><b>Crash records:</b> Ohio public crash records for 2021-2025.</li>
+          <li><b>Tracked crashes:</b> 285 crashes at the mapped corridor locations; 103 people injured.</li>
+          <li><b>Children estimate:</b> About 2,700 nearby residents x Shaker's 24.0% under-18 share = roughly 650 children.</li>
+          <li><b>Walking/biking risk:</b> Citywide injury rates are much higher when a crash involves a pedestrian or bicyclist.</li>
+          <li><b>School anchors:</b> Boulevard Elementary, Shaker Middle, and Hathaway Brown are shown by default.</li>
+          <li><b>Optional layers:</b> Turn on other public schools, other private schools, and population estimates from the layer button.</li>
+        </ul>
+      </div>
+
+      <h2>Commute Focus</h2>
+      <div class="commute-list">
+        <button class="commute-button" data-commute="Boulevard Elementary School" type="button"><strong>Boulevard Elementary</strong><span>BLVD</span></button>
+        <button class="commute-button" data-commute="Hathaway Brown School" type="button"><strong>Hathaway Brown</strong><span>HB</span></button>
+        <button class="commute-button" data-commute="University School, Shaker Campus" type="button"><strong>University School</strong><span>US</span></button>
+        <button class="commute-button" data-commute="Shaker Heights Middle School" type="button"><strong>Shaker Middle</strong><span>MID</span></button>
+      </div>
+
+      <h2>Block Breakdown</h2>
+      <div class="segment-list" id="segmentList"></div>
+
+      <h2>Map Legend</h2>
+      <div class="legend">
+        <div class="legend-subhead">Map Layers</div>
+        <div class="legend-row"><span class="swatch" style="background: var(--red)"></span> Crash marker sized by crash count</div>
+        <div class="legend-row"><span class="swatch line" style="background: #8b1a1a; height:8px;"></span> Combined corridor band shown at overview zoom</div>
+        <div class="legend-row"><span class="swatch line dashed" style="background: var(--blue)"></span> Optional block-detail line</div>
+        <div class="legend-row"><span class="swatch line dashed" style="color:#0f7a8a;background:#0f7a8a"></span> Focused child-route connector shown after pin click</div>
+        <div class="legend-row"><span class="swatch" style="background: #eefbf4; border: 2px solid #16784f"></span> Comparison treatment: Chesterton one-way / modal filter</div>
+        <div class="legend-row"><span class="swatch" style="background: rgba(22, 120, 79, 0.18); border: 2px solid var(--green)"></span> 0.5-mile neighborhood destination area</div>
+        <div class="legend-subhead">Pin Labels</div>
+        <button class="legend-row legend-jump" data-jump="BLVD" type="button"><span class="legend-pin" style="background:#fff4d6;border-color:#b45309;color:#7c2d12;">BLVD</span> Boulevard Elementary School</button>
+        <button class="legend-row legend-jump" data-jump="MID" type="button"><span class="legend-pin" style="background:#eaf2ff;border-color:#1d4ed8;color:#123a8c;">MID</span> Shaker Heights Middle School</button>
+        <button class="legend-row legend-jump" data-jump="HB" type="button"><span class="legend-pin" style="border-color:#8b5cf6;color:#5b21b6;">HB</span> Hathaway Brown School</button>
+        <button class="legend-row legend-jump" data-jump="PLAY" type="button"><span class="legend-pin">PLAY</span> Playground, park, or play space</button>
+        <button class="legend-row legend-jump" data-jump="FIELD" type="button"><span class="legend-pin">FIELD</span> Athletic field or recreation field</button>
+        <button class="legend-row legend-jump" data-jump="OVAL" type="button"><span class="legend-pin">OVAL</span> Courtland Oval / Fairmount field and park area</button>
+        <button class="legend-row legend-jump" data-jump="LIB" type="button"><span class="legend-pin" style="border-color:#c48a14;color:#7a520b;">LIB</span> Library</button>
+        <button class="legend-row legend-jump" data-jump="DEST" type="button"><span class="legend-pin">DEST</span> Everyday destination</button>
+        <button class="legend-row legend-jump" data-jump="SCH" type="button"><span class="legend-pin" style="border-color:#1d4ed8;color:#1d4ed8;">SCH</span> Other Shaker public school, optional layer</button>
+        <button class="legend-row legend-jump" data-jump="PVT" type="button"><span class="legend-pin" style="border-color:#8b5cf6;color:#5b21b6;">PVT</span> Other private/parochial school, optional layer</button>
+        <button class="legend-row legend-jump" data-jump="EST" type="button"><span class="legend-pin" style="border-color:#0f766e;color:#0f766e;">EST</span> Nearby child/resident estimate, optional layer</button>
+      </div>
+    </aside>
+
+    <section id="map" aria-label="Shelburne street safety map showing crashes, schools, destinations, and barrier areas"></section>
+  </main>
+
+  <script>
+    const map = L.map("map", { zoomControl: true }).setView([41.4828, -81.5367], 15);
+    window.streetSafetyMap = map;
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    const crashLocations = [
+      { name: "Fairmount Circle", lat: 41.4905, lng: -81.5371, crashes: 74, injured: 16, note: "Worst tracked spot in the corridor; pedestrian hit in a marked crosswalk in Aug. 2025." },
+      { name: "Fairmount Blvd & Warrensville Center Rd", lat: 41.4864, lng: -81.5375, crashes: 55, injured: 26, note: "Major intersection at the Circle approach; one serious injury noted." },
+      { name: "Eaton Rd & Fairmount Blvd", lat: 41.48645, lng: -81.552, crashes: 10, injured: 4, note: "West gateway to the Shelburne cut-through." },
+      { name: "Fairmount Blvd & Green Rd", lat: 41.4863, lng: -81.5171, crashes: 21, injured: 7, note: "East end of Fairmount, near Fairmount Circle travel patterns." },
+      { name: "Shelburne Rd mid-block", lat: 41.4839, lng: -81.5395, crashes: 28, injured: 11, note: "Residential cut-through crashes concentrated around Courtland, Cranlyn, and Wrenford." },
+      { name: "Eaton Rd & Shelburne Rd", lat: 41.48518, lng: -81.54828, crashes: 2, injured: 0, note: "West entry to the residential cut-through." },
+      { name: "Shelburne / North Park / Chesterton junction", lat: 41.4844692, lng: -81.5381172, crashes: 1, injured: 0, note: "Complex nearby junction area where Shelburne, North Park, and Chesterton meet." },
+      { name: "Shelburne Rd & Warrensville Center Rd", lat: 41.48353, lng: -81.53619, crashes: 10, injured: 5, note: "East exit of the cut-through; speed, alcohol, and bike crash factors appear in the crash-record notes." },
+      { name: "Green Rd & Shelburne Rd", lat: 41.48349, lng: -81.517, crashes: 6, injured: 3, note: "Eastern end of Shelburne corridor." },
+      { name: "Courtland Blvd & S Park Blvd", lat: 41.480281, lng: -81.543112, crashes: 3, injured: 3, note: "Three cyclist crashes; one serious injury and two minor injuries." },
+      { name: "Courtland Blvd & Shaker Blvd", lat: 41.47851, lng: -81.54307, crashes: 14, injured: 3, note: "Major south-edge crossing on a neighborhood route." },
+      { name: "Warrensville Center Rd & Shaker Blvd", lat: 41.4784, lng: -81.5363, crashes: 61, injured: 25, note: "Major arterial and transit crossing; two serious injuries noted." },
+      { name: "Chesterton Rd one-way / modal-filter comparison", lat: 41.47885, lng: -81.5419, crashes: 0, injured: 0, note: "Zero tracked crashes in the 2021-2025 crash-summary dataset. This is the comparison segment near the Chesterton/Shaker/South Park area where through-driving is restricted by a one-way/modal-filter style treatment." }
+    ];
+
+    const segments = [
+      {
+        id: "northwest-loop",
+        name: "Eaton-Fairmount / Eaton-Shelburne / Courtland-Fairmount block",
+        summary: "West gateway loop where Fairmount traffic feeds the residential network.",
+        crashes: 20,
+        injured: 6,
+        color: "#2563eb",
+        points: [[41.48645, -81.552], [41.48518, -81.54828], [41.4839, -81.5395], [41.48647, -81.5415], [41.48645, -81.552]],
+        ask: "Treat as a gateway: daylighting, speed feedback, curb extensions, and a clear crossing inventory."
+      },
+      {
+        id: "courtland-to-npark",
+        name: "Shelburne between Courtland and North Park / Chesterton",
+        summary: "Interior neighborhood route with low recorded crashes but high avoidance value.",
+        crashes: 9,
+        injured: 2,
+        color: "#5b6ee1",
+        points: [[41.4839, -81.5395], [41.48459, -81.54314], [41.4844692, -81.5381172]],
+        ask: "Use a field walk to document missing crossings, sight lines, and crossing comfort."
+      },
+      {
+        id: "shelburne-to-warrensville",
+        name: "Shelburne to Warrensville",
+        summary: "Core cut-through section where residential street function and driver route choice conflict.",
+        crashes: 40,
+        injured: 16,
+        color: "#0f7a8a",
+        points: [[41.48518, -81.54828], [41.4839, -81.5395], [41.48353, -81.53619]],
+        ask: "Pilot speed cushions, chicanes, or a local-traffic filter with before/after volume counts."
+      },
+      {
+        id: "warrensville-to-green",
+        name: "Shelburne after Warrensville to Green",
+        summary: "East continuation of the cut-through toward Green.",
+        crashes: 16,
+        injured: 8,
+        color: "#2f8d46",
+        points: [[41.48353, -81.53619], [41.48349, -81.527], [41.48349, -81.517]],
+        ask: "Pair east-gateway traffic calming with crossing protection at Green."
+      },
+      {
+        id: "npark-sherbrooke-courtland",
+        name: "North Park / Shelburne to Sherbrooke to Courtland",
+        summary: "School and park access block where crash counts may understate avoidance.",
+        crashes: 1,
+        injured: 0,
+        color: "#7c5cc4",
+        points: [[41.4844692, -81.5381172], [41.483, -81.55056], [41.48339, -81.54288], [41.4839, -81.5395]],
+        ask: "Study North Park crossings near Sherbrooke and Courtland; add high-visibility or raised crossings where warranted."
+      },
+      {
+        id: "courtland-southpark-chesterton",
+        name: "Courtland to South Park",
+        summary: "Bike injury location near the south edge of the neighborhood route.",
+        crashes: 3,
+        injured: 3,
+        color: "#d8791d",
+        points: [[41.48339, -81.54288], [41.480281, -81.543112]],
+        ask: "Use the cyclist injury record and nearby zero-crash comparison treatment to support a school-route safety study."
+      },
+      {
+        id: "shaker-middle-library",
+        name: "Warrensville and Shaker, east and west around school/library",
+        summary: "Southern arterial wall around Shaker Middle School, Bertram Woods Library, and Shaker Boulevard crossings.",
+        crashes: 113,
+        injured: 44,
+        color: "#b91c1c",
+        points: [[41.47851, -81.54307], [41.4784, -81.5363], [41.4784, -81.531], [41.4784, -81.5171]],
+        ask: "Ask for a complete crossing audit: signal timing, protected crossings, turn calming, and school/library access."
+      },
+      {
+        id: "fairmount-circle",
+        name: "Fairmount Circle",
+        summary: "Highest crash burden in the neighborhood destination area.",
+        crashes: 129,
+        injured: 42,
+        color: "#8b1a1a",
+        points: [[41.4864, -81.5375], [41.4882, -81.5372], [41.4905, -81.5371], [41.4864, -81.5375]],
+        ask: "Request a rotary safety review, protected crossings, daylighting, and slower entry geometry."
+      }
+    ];
+
+    const aggregateBands = [
+      {
+        id: "band-shelburne-eaton-warrensville",
+        name: "Shelburne: Eaton to Warrensville",
+        crashes: 40,
+        injured: 16,
+        color: "#8b1a1a",
+        labelPoint: [41.4842, -81.542],
+        points: [[41.48518, -81.54828], [41.4839, -81.5395], [41.48353, -81.53619]],
+        breakdown: "Eaton & Shelburne: 2 crashes / 0 injured. Shelburne mid-block: 28 crashes / 11 injured. Shelburne & Warrensville: 10 crashes / 5 injured.",
+        note: "This is the core cut-through band between Eaton and Warrensville. Zoom in for the block-by-block segments."
+      },
+      {
+        id: "band-shelburne-full",
+        name: "Shelburne cut-through: Eaton to Green",
+        crashes: 47,
+        injured: 19,
+        color: "#b91c1c",
+        labelPoint: [41.4838, -81.531],
+        points: [[41.48518, -81.54828], [41.4839, -81.5395], [41.48353, -81.53619], [41.48349, -81.517]],
+        breakdown: "Eaton & Shelburne: 2. Mid-block Shelburne: 28. Shelburne / North Park / Chesterton junction: 1. Shelburne & Warrensville: 10. Green & Shelburne: 6.",
+        note: "Section total from the 2021-2025 ODOT / Shaker Heights Police crash-record summary."
+      },
+      {
+        id: "band-fairmount-circle",
+        name: "Fairmount + Circle north edge",
+        crashes: 160,
+        injured: 53,
+        color: "#7f1d1d",
+        labelPoint: [41.4877, -81.5377],
+        points: [[41.48645, -81.552], [41.4864, -81.5375], [41.4905, -81.5371], [41.4863, -81.5171]],
+        breakdown: "Fairmount Circle: 74. Fairmount & Warrensville: 55. Fairmount & Green: 21. Eaton & Fairmount: 10.",
+        note: "North-edge arterial crash burden from the 2021-2025 ODOT / Shaker Heights Police crash-record summary."
+      },
+      {
+        id: "band-shaker-south",
+        name: "Shaker Blvd south edge",
+        crashes: 78,
+        injured: 31,
+        color: "#a33b12",
+        labelPoint: [41.4787, -81.5386],
+        points: [[41.480281, -81.543112], [41.47851, -81.54307], [41.4784, -81.5363], [41.4784, -81.5171]],
+        breakdown: "Warrensville & Shaker: 61. Courtland & Shaker: 14. Courtland & South Park: 3. Chesterton one-way / modal-filter comparison: 0.",
+        note: "South-edge arterial and bike-injury corridor from the 2021-2025 ODOT / Shaker Heights Police crash-record summary. Chesterton is highlighted as a zero-crash comparison segment in this dataset."
+      }
+    ];
+
+    const comparisonTreatments = [
+      {
+        name: "Chesterton one-way / modal-filter comparison",
+        lat: 41.47885,
+        lng: -81.5419,
+        crashes: 0,
+        injured: 0,
+        note: "The 2021-2025 crash-summary dataset shows 0 crashes on the Chesterton one-way comparison segment. Use this carefully as comparison evidence: where through-driving is restricted near Chesterton/Shaker/South Park, the tracked crash count is zero in this dataset."
+      }
+    ];
+
+    const kidDestinations = [
+      { name: "Chesterton Athletic Fields / soccer field", type: "field", lat: 41.4838112, lng: -81.5391582, dist: "near Shelburne", note: "Soccer field and athletic-field green space immediately south of Shelburne and close to the Courtland / Chesterton route." },
+      { name: "Hathaway Brown athletic fields", type: "field", lat: 41.4812649, lng: -81.5417434, dist: "about 0.3 mi", note: "School athletic fields tied to Hathaway Brown trips near North Park and Courtland." },
+      { name: "Courtland Oval at Fairmount Blvd field/park area", type: "field", label: "OVAL", lat: 41.4856714, lng: -81.5432043, dist: "about 0.4 mi", note: "Courtland Oval field/park area near Fairmount, a clear child destination on the north side of the Shelburne route." },
+      { name: "Shaker Middle School athletic fields", type: "field", lat: 41.478174, lng: -81.5308639, dist: "about 0.5 mi", note: "Middle-school field area near Shaker, Warrensville, the library, and the corridor's southern crossings." },
+      { name: "Byron Road Triangle Park", type: "park", lat: 41.4758252, lng: -81.5341777, dist: "about 0.6 mi", note: "Small mapped park near Bertram Woods Library and the Shaker / Warrensville crossing area." },
+      { name: "Future Trader Joe's / Fairmount Circle", type: "kid", lat: 41.4905, lng: -81.5371, dist: "0.46 mi", note: "Future everyday destination co-located with a major barrier." },
+      { name: "Bertram Woods Library Branch", type: "library", lat: 41.4764204, lng: -81.5351454, dist: "about 0.5 mi", note: "Public library branch next to the Shaker / Warrensville school-library access concern." },
+      { name: "Thornton Park", type: "park", lat: 41.4692399, lng: -81.5346926, dist: "about 1.0 mi", note: "City park and recreation destination with pool, ice rink, fields, and courts." }
+    ];
+
+    const publicSchools = [
+      { name: "Boulevard Elementary School", type: "assigned", lat: 41.4806478, lng: -81.5779115, address: "14900 Drexmore Road", grades: "K-5", note: "Assigned public elementary school for this neighborhood area. About 2.3 miles / 54 minutes on foot from the Shelburne corridor via Shaker Blvd." },
+      { name: "Fernway Elementary School", type: "public-school", lat: 41.4708047, lng: -81.557351, address: "17420 Fernway Road", grades: "K-5", note: "Current Shaker public elementary school." },
+      { name: "Lomond Elementary School", type: "public-school", lat: 41.4604273, lng: -81.5536323, address: "17917 Lomond Blvd.", grades: "K-5", note: "Current Shaker public elementary school." },
+      { name: "Mercer Elementary School", type: "public-school", lat: 41.4756089, lng: -81.5151217, address: "23325 Wimbledon Road", grades: "K-5", note: "Current Shaker public elementary school." },
+      { name: "Onaway Elementary School", type: "public-school", lat: 41.4752657, lng: -81.5721701, address: "3115 Woodbury Road", grades: "K-5", note: "Current Shaker public elementary school." },
+      { name: "Ludlow Early Learning Center", type: "public-school", lat: 41.4758333, lng: -81.5838889, address: "14201 Southington Road", grades: "PreK, ages 3-5", note: "Current Shaker early learning site." },
+      { name: "Shaker Heights Middle School", type: "priority-public", lat: 41.4768336, lng: -81.5316098, address: "20600 Shaker Blvd.", grades: "6-8", note: "Priority public-school anchor for this corridor, next to the Warrensville/Shaker school-library access concern." },
+      { name: "Shaker Heights High School", type: "public-school", lat: 41.4736121, lng: -81.5699157, address: "15911 Aldersyde Drive", grades: "9-12", note: "Current Shaker high school and future teen destination in the school/destination layer." }
+    ];
+
+    const privateSchools = [
+      { name: "Hathaway Brown School", lat: 41.4815915, lng: -81.5416763, address: "19600 North Park Blvd.", grades: "PreK-12", note: "Private school within about a half-mile of Shelburne; directly tied to the North Park / Courtland / South Park school-route context." },
+      { name: "Ruffing Montessori School", lat: 41.4860642, lng: -81.559803, address: "3380 Fairmount Blvd.", grades: "Toddler-8", note: "Private Montessori school on the Fairmount corridor west of the Shelburne area." },
+      { name: "Laurel School, Lyman Campus", lat: 41.4826098, lng: -81.5124493, address: "1 Lyman Circle", grades: "PreK-12", note: "Private girls' school near the Green / Fairmount / Mercer edge of the broader corridor." },
+      { name: "University School, Shaker Campus", lat: 41.4822069, lng: -81.5316772, address: "20701 Brantley Road", grades: "Junior K-8", note: "Private boys' lower and middle school campus near the Warrensville / Shaker / North Park corridor." },
+      { name: "St. Dominic School", lat: 41.4657981, lng: -81.5448098, address: "3455 Norwood Road", grades: "K-8", note: "Parochial school southeast of the Shelburne / Shaker / Green corridor area." },
+      { name: "Beaumont School", lat: 41.4853753, lng: -81.5618557, address: "3301 North Park Blvd.", grades: "9-12", note: "Private girls' high school west of Eaton on the North Park corridor." },
+      { name: "Gesu School", lat: 41.4925529, lng: -81.5326231, address: "2450 Miramar Blvd.", grades: "K-8", note: "Parochial school north of Fairmount Circle and near the broader school-trip network." },
+      { name: "Hanna Perkins Center for Child Development", lat: 41.4852, lng: -81.5317, address: "19910 Malvern Road", grades: "Early childhood / therapeutic school", note: "Early-childhood and child-development school site near the North Park corridor." }
+    ];
+
+    const populationEvidence = [
+      { name: "Nearby resident estimate", type: "population", lat: 41.48272, lng: -81.53863, offsetLat: 0.00025, offsetLng: -0.00035, stat: "about 2,700 nearby residents", note: "Neighborhood-scale population estimate for the Census tract around the corridor." },
+      { name: "Children estimate", type: "population", lat: 41.48272, lng: -81.53863, offsetLat: -0.00015, offsetLng: 0.00045, stat: "roughly 650 children", note: "Calculation: 2,700 nearby residents x Shaker Heights' 24.0% under-18 share = about 650 children. This is a planning estimate for scale, not an exact child count." }
+    ];
+
+    const childRouteFocus = {
+      "Boulevard Elementary School": [
+        {
+          name: "Shelburne area to Boulevard Elementary",
+          points: [[41.4839, -81.5395], [41.4784, -81.5363], [41.47851, -81.54307], [41.4806478, -81.5779115]],
+          note: "Illustrative route exposure: neighborhood trips toward Boulevard Elementary must use or cross major corridors, especially Shaker / Warrensville and the western school-route network."
+        }
+      ],
+      "Shaker Heights Middle School": [
+        {
+          name: "Shelburne area to Shaker Middle",
+          points: [[41.4839, -81.5395], [41.48353, -81.53619], [41.4784, -81.5363], [41.4768336, -81.5316098]],
+          note: "Illustrative pickup/walk/bike exposure: trips toward Shaker Middle concentrate around Shelburne, Warrensville, Shaker, transit, and the library."
+        }
+      ],
+      "Hathaway Brown School": [
+        {
+          name: "Shelburne area to Hathaway Brown",
+          points: [[41.4839, -81.5395], [41.48339, -81.54288], [41.4815915, -81.5416763]],
+          note: "Illustrative school-route exposure: nearby trips to Hathaway Brown and its fields cross the North Park / Courtland / South Park school-route area."
+        }
+      ],
+      "University School, Shaker Campus": [
+        {
+          name: "Shelburne area to University School",
+          points: [[41.4839, -81.5395], [41.4844692, -81.5381172], [41.4852, -81.5317], [41.4822069, -81.5316772]],
+          note: "Illustrative school-route exposure: trips toward University School move through the Shelburne / North Park / Chesterton junction and the North Park / Warrensville-side school corridor."
+        }
+      ],
+      "Bertram Woods Library Branch": [
+        {
+          name: "Shelburne area to Bertram Woods Library",
+          points: [[41.4839, -81.5395], [41.48353, -81.53619], [41.4784, -81.5363], [41.4764204, -81.5351454]],
+          note: "Illustrative destination exposure: library trips from the neighborhood move through the Warrensville / Shaker crossing area."
+        }
+      ],
+      "Chesterton Athletic Fields / soccer field": [
+        {
+          name: "Shelburne to Chesterton soccer field",
+          points: [[41.4839, -81.5395], [41.4838112, -81.5391582]],
+          note: "Illustrative short trip: the field is very close to Shelburne, but the nearby street geometry still matters for children walking or biking."
+        }
+      ],
+      "Hathaway Brown athletic fields": [
+        {
+          name: "Shelburne to Hathaway Brown fields",
+          points: [[41.4839, -81.5395], [41.48339, -81.54288], [41.4812649, -81.5417434]],
+          note: "Illustrative recreation/school trip through the Courtland / North Park / South Park area."
+        }
+      ],
+      "Courtland Oval at Fairmount Blvd field/park area": [
+        {
+          name: "Shelburne to Courtland Oval",
+          points: [[41.4839, -81.5395], [41.48459, -81.54314], [41.4856714, -81.5432043]],
+          note: "Illustrative neighborhood park/field trip: kids moving north from Shelburne must navigate Courtland and Fairmount-side crossings."
+        }
+      ],
+      "Shaker Middle School athletic fields": [
+        {
+          name: "Shelburne to Shaker Middle fields",
+          points: [[41.4839, -81.5395], [41.48353, -81.53619], [41.4784, -81.5363], [41.478174, -81.5308639]],
+          note: "Illustrative recreation/school trip toward the middle-school field area through the Warrensville / Shaker edge."
+        }
+      ],
+      "Byron Road Triangle Park": [
+        {
+          name: "Shelburne to Byron Road Triangle Park",
+          points: [[41.4839, -81.5395], [41.48353, -81.53619], [41.4784, -81.5363], [41.4758252, -81.5341777]],
+          note: "Illustrative park trip through the Shaker / Warrensville school-library crossing area."
+        }
+      ],
+      "Future Trader Joe's / Fairmount Circle": [
+        {
+          name: "Shelburne to Fairmount Circle errand area",
+          points: [[41.4839, -81.5395], [41.4864, -81.5375], [41.4905, -81.5371]],
+          note: "Illustrative everyday-destination trip: errands at Fairmount Circle sit beside the highest crash burden in the map."
+        }
+      ]
+    };
+
+    const crashLayer = L.layerGroup().addTo(map);
+    const aggregateLayer = L.layerGroup().addTo(map);
+    const segmentLayer = L.layerGroup();
+    const comparisonLayer = L.layerGroup().addTo(map);
+    const kidLayer = L.layerGroup().addTo(map);
+    const keySchoolLayer = L.layerGroup().addTo(map);
+    const publicSchoolLayer = L.layerGroup();
+    const privateSchoolLayer = L.layerGroup();
+    const populationLayer = L.layerGroup();
+    const routeFocusLayer = L.layerGroup().addTo(map);
+    const legendTargets = {};
+    const segmentCards = {};
+
+    const crashSegmentMatches = {
+      "Fairmount Circle": ["fairmount-circle"],
+      "Fairmount Blvd & Warrensville Center Rd": ["fairmount-circle", "shaker-middle-library"],
+      "Eaton Rd & Fairmount Blvd": ["northwest-loop", "fairmount-circle"],
+      "Fairmount Blvd & Green Rd": ["fairmount-circle"],
+      "Shelburne Rd mid-block": ["shelburne-to-warrensville", "courtland-to-npark", "npark-sherbrooke-courtland"],
+      "Eaton Rd & Shelburne Rd": ["northwest-loop", "shelburne-to-warrensville"],
+      "Shelburne / North Park / Chesterton junction": ["courtland-to-npark", "npark-sherbrooke-courtland"],
+      "Shelburne Rd & Warrensville Center Rd": ["shelburne-to-warrensville", "warrensville-to-green", "shaker-middle-library"],
+      "Green Rd & Shelburne Rd": ["warrensville-to-green"],
+      "Courtland Blvd & S Park Blvd": ["courtland-southpark-chesterton", "shaker-middle-library"],
+      "Courtland Blvd & Shaker Blvd": ["shaker-middle-library", "courtland-southpark-chesterton"],
+      "Warrensville Center Rd & Shaker Blvd": ["shaker-middle-library"],
+      "Chesterton Rd one-way / modal-filter comparison": ["courtland-southpark-chesterton", "shaker-middle-library"]
+    };
+
+    const commuteSegmentMatches = {
+      "Boulevard Elementary School": ["shaker-middle-library", "courtland-southpark-chesterton"],
+      "Hathaway Brown School": ["npark-sherbrooke-courtland", "courtland-southpark-chesterton", "courtland-to-npark"],
+      "University School, Shaker Campus": ["courtland-to-npark", "shelburne-to-warrensville", "fairmount-circle"],
+      "Shaker Heights Middle School": ["shelburne-to-warrensville", "shaker-middle-library", "courtland-southpark-chesterton"]
+    };
+
+    const clearSegmentFocus = () => {
+      Object.values(segmentPolylines).forEach((line) => {
+        const segment = segments.find((item) => segmentPolylines[item.id] === line);
+        if (!segment) return;
+        line.setStyle({ color: segment.color, weight: 4, opacity: 0.46, dashArray: "8 8" });
+      });
+      Object.values(segmentCards).forEach((card) => card.classList.remove("active"));
+    };
+
+    const focusSegments = (ids, shouldFit = true) => {
+      if (!ids || !ids.length) return;
+      routeFocusLayer.clearLayers();
+      if (!map.hasLayer(segmentLayer)) {
+        segmentLayer.addTo(map);
+      }
+      clearSegmentFocus();
+      const bounds = L.latLngBounds([]);
+      ids.forEach((id) => {
+        const line = segmentPolylines[id];
+        const card = segmentCards[id];
+        if (!line) return;
+        line.setStyle({ color: "#8b1a1a", weight: 8, opacity: 0.92, dashArray: null });
+        line.bringToFront();
+        line.getLatLngs().forEach((point) => bounds.extend(point));
+        if (card) {
+          card.classList.add("active");
+          card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      });
+      if (shouldFit && bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [52, 52], maxZoom: 16 });
+      }
+    };
+
+    const highlightSegmentsOnly = (ids) => {
+      if (!ids || !ids.length) return;
+      if (!map.hasLayer(segmentLayer)) {
+        segmentLayer.addTo(map);
+      }
+      clearSegmentFocus();
+      ids.forEach((id) => {
+        const line = segmentPolylines[id];
+        const card = segmentCards[id];
+        if (!line) return;
+        line.setStyle({ color: "#8b1a1a", weight: 8, opacity: 0.92, dashArray: null });
+        line.bringToFront();
+        if (card) {
+          card.classList.add("active");
+        }
+      });
+    };
+
+    const showChildRoutesForNames = (placeNames) => {
+      const routes = placeNames.flatMap((placeName) => childRouteFocus[placeName] || []);
+      routeFocusLayer.clearLayers();
+      if (!routes.length) return;
+      if (!map.hasLayer(routeFocusLayer)) {
+        routeFocusLayer.addTo(map);
+      }
+
+      clearSegmentFocus();
+      const bounds = L.latLngBounds([]);
+      routes.forEach((route) => {
+        const line = L.polyline(route.points, {
+          color: "#0f7a8a",
+          weight: 6,
+          opacity: 0.86,
+          dashArray: "4 8",
+          lineCap: "round",
+          lineJoin: "round"
+        }).bindPopup(`<div class="popup"><h3>${route.name}</h3>${route.note}</div>`);
+
+        const midpoint = route.points[Math.floor(route.points.length / 2)];
+        const label = L.marker(midpoint, {
+          icon: L.divIcon({
+            className: "",
+            html: `<div class="route-label">child route</div>`,
+            iconSize: [86, 24],
+            iconAnchor: [43, 12]
+          }),
+          interactive: false
+        });
+
+        line.addTo(routeFocusLayer);
+        label.addTo(routeFocusLayer);
+        route.points.forEach((point) => bounds.extend(point));
+      });
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [52, 52], maxZoom: 16 });
+      }
+    };
+
+    const showChildRoutes = (placeName) => {
+      showChildRoutesForNames([placeName]);
+    };
+
+    const registerLegendTarget = (label, marker, layer, name) => {
+      if (!legendTargets[label]) {
+        legendTargets[label] = [];
+      }
+      legendTargets[label].push({ marker, layer, name });
+    };
+
+    const jumpToLegendTarget = (label) => {
+      const targets = legendTargets[label] || [];
+      if (!targets.length) return;
+
+      targets.forEach(({ layer }) => {
+        if (layer && !map.hasLayer(layer)) {
+          layer.addTo(map);
+        }
+      });
+
+      if (targets.length === 1) {
+        const { marker, name } = targets[0];
+        map.setView(marker.getLatLng(), 16, { animate: true });
+        marker.openPopup();
+        showChildRoutes(name);
+        return;
+      }
+
+      const bounds = L.latLngBounds(targets.map(({ marker }) => marker.getLatLng()));
+      map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
+      showChildRoutesForNames(targets.map(({ name }) => name));
+    };
+
+    const findTargetByName = (name) => {
+      return Object.values(legendTargets)
+        .flat()
+        .find((target) => target.name === name);
+    };
+
+    const focusCommute = (name) => {
+      const target = findTargetByName(name);
+      if (target?.layer && !map.hasLayer(target.layer)) {
+        target.layer.addTo(map);
+      }
+      showChildRoutes(name);
+      highlightSegmentsOnly(commuteSegmentMatches[name]);
+      if (target?.marker) {
+        target.marker.openPopup();
+      }
+    };
+
+    L.circle([41.4842, -81.5362], {
+      radius: 804.672,
+      color: "#16784f",
+      weight: 2,
+      opacity: 0.9,
+      fillColor: "#16784f",
+      fillOpacity: 0.08
+    }).bindPopup("<div class='popup'><h3>0.5-mile neighborhood destination area</h3><p>This circle shows everyday destinations close enough for short walking, biking, and scooter trips from the Shelburne corridor: schools, playgrounds, libraries, parks, recreation fields, and errands.</p></div>").addTo(map);
+
+    crashLocations.forEach((site) => {
+      const radius = site.crashes === 0 ? 6 : Math.max(8, Math.sqrt(site.crashes) * 4.1);
+      const marker = L.circleMarker([site.lat, site.lng], {
+        radius,
+        color: "#7f1d1d",
+        weight: 2,
+        fillColor: site.injured > 0 ? "#b91c1c" : "#f97316",
+        fillOpacity: 0.78
+      })
+        .bindPopup(`<div class="popup"><h3>${site.name}</h3><b>2021-2025:</b> ${site.crashes} crashes · ${site.injured} injured<br>${site.note}</div>`)
+        .bindTooltip(`${site.name}: ${site.crashes} crashes, ${site.injured} injured, 2021-2025`)
+        .addTo(crashLayer);
+      marker.on("click", () => focusSegments(crashSegmentMatches[site.name]));
+      marker.on("mouseover", () => focusSegments(crashSegmentMatches[site.name], false));
+    });
+
+    const segmentPolylines = {};
+    const aggregateBandLines = {};
+    const aggregateBandLabels = {};
+
+    aggregateBands.forEach((band) => {
+      const line = L.polyline(band.points, {
+        color: band.color,
+        weight: 15,
+        opacity: 0.74,
+        lineCap: "round",
+        lineJoin: "round"
+      })
+        .bindPopup(`<div class="popup"><h3>${band.name}</h3><b>${band.crashes} combined crashes</b> · <b>${band.injured} injured</b><br>${band.note}<br><br><b>Breakdown:</b> ${band.breakdown}</div>`)
+        .bindTooltip(`${band.name}: ${band.crashes} crashes, ${band.injured} injured`);
+
+      const label = L.marker(band.labelPoint, {
+        icon: L.divIcon({
+          className: "",
+          html: `<div class="band-label">${band.name}<span>${band.crashes} crashes</span></div>`,
+          iconSize: [132, 42],
+          iconAnchor: [66, 21]
+        }),
+        interactive: true
+      })
+        .bindPopup(`<div class="popup"><h3>${band.name}</h3><b>${band.crashes} combined crashes</b> · <b>${band.injured} injured</b><br>${band.note}<br><br><b>Breakdown:</b> ${band.breakdown}</div>`);
+
+      line.addTo(aggregateLayer);
+      label.addTo(aggregateLayer);
+      aggregateBandLines[band.id] = line;
+      aggregateBandLabels[band.id] = label;
+    });
+
+    segments.forEach((segment) => {
+      const line = L.polyline(segment.points, {
+        color: segment.color,
+        weight: 4,
+        opacity: 0.46,
+        dashArray: "8 8",
+        lineCap: "round",
+        lineJoin: "round"
+      })
+        .bindPopup(`<div class="popup"><h3>${segment.name}</h3><b>${segment.crashes} tracked nearby crashes</b> · <b>${segment.injured} injured</b><br>${segment.summary}<br><br><b>Possible ask:</b> ${segment.ask}</div>`)
+        .bindTooltip(`${segment.name}: ${segment.crashes} crashes`)
+        .addTo(segmentLayer);
+
+      segmentPolylines[segment.id] = line;
+    });
+
+    comparisonTreatments.forEach((item) => {
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="comparison-marker" aria-label="Chesterton comparison: 0 crashes">0</div>`,
+        iconSize: [42, 42],
+        iconAnchor: [21, 21]
+      });
+      L.marker([item.lat, item.lng], { icon })
+        .bindPopup(`<div class="popup"><h3>${item.name}</h3><b>2021-2025:</b> ${item.crashes} crashes · ${item.injured} injured<br>${item.note}</div>`)
+        .bindTooltip("Chesterton one-way / modal-filter comparison: 0 crashes, 2021-2025")
+        .addTo(comparisonLayer);
+    });
+
+    kidDestinations.forEach((place) => {
+      const label = place.label || (place.type === "school" ? "SCH" : place.type === "library" ? "LIB" : place.type === "park" ? "PLAY" : place.type === "field" ? "FIELD" : "DEST");
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="kid-marker ${place.type}">${label}</div>`,
+        iconSize: [label === "FIELD" ? 54 : 42, 26],
+        iconAnchor: [label === "FIELD" ? 27 : 21, 13]
+      });
+      const marker = L.marker([place.lat, place.lng], { icon })
+        .bindPopup(`<div class="popup"><h3>${place.name}</h3><b>Distance from Shelburne:</b> ${place.dist}<br>${place.note}</div>`)
+        .bindTooltip(place.name)
+        .addTo(kidLayer);
+      marker.on("click", () => showChildRoutes(place.name));
+      registerLegendTarget(label, marker, kidLayer, place.name);
+    });
+
+    publicSchools.forEach((school) => {
+      const label = school.type === "assigned" ? "BLVD" : school.type === "priority-public" ? "MID" : "SCH";
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="kid-marker ${school.type}">${label}</div>`,
+        iconSize: [46, 26],
+        iconAnchor: [23, 13]
+      });
+      const marker = L.marker([school.lat, school.lng], { icon })
+        .bindPopup(`<div class="popup"><h3>${school.name}</h3><b>${school.grades}</b><br>${school.address}<br><br>${school.note}</div>`)
+        .bindTooltip(school.type === "assigned" ? `${school.name}: assigned elementary` : school.name);
+      marker.on("click", () => showChildRoutes(school.name));
+      if (school.type === "assigned" || school.type === "priority-public") {
+        marker.addTo(keySchoolLayer);
+        registerLegendTarget(label, marker, keySchoolLayer, school.name);
+      } else {
+        marker.addTo(publicSchoolLayer);
+        registerLegendTarget(label, marker, publicSchoolLayer, school.name);
+      }
+    });
+
+    privateSchools.forEach((school) => {
+      const label = school.name === "Hathaway Brown School" ? "HB" : "PVT";
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="kid-marker private-school">${label}</div>`,
+        iconSize: [46, 26],
+        iconAnchor: [23, 13]
+      });
+      const marker = L.marker([school.lat, school.lng], { icon })
+        .bindPopup(`<div class="popup"><h3>${school.name}</h3><b>${school.grades}</b><br>${school.address}<br><br>${school.note}</div>`)
+        .bindTooltip(school.name);
+      marker.on("click", () => showChildRoutes(school.name));
+      if (school.name === "Hathaway Brown School") {
+        marker.addTo(keySchoolLayer);
+        registerLegendTarget(label, marker, keySchoolLayer, school.name);
+      } else {
+        marker.addTo(privateSchoolLayer);
+        registerLegendTarget(label, marker, privateSchoolLayer, school.name);
+      }
+    });
+
+    populationEvidence.forEach((place) => {
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="kid-marker population">EST</div>`,
+        iconSize: [42, 26],
+        iconAnchor: [21, 13]
+      });
+      const marker = L.marker([place.lat + place.offsetLat, place.lng + place.offsetLng], { icon })
+        .bindPopup(`<div class="popup"><h3>${place.name}</h3><b>${place.stat}</b><br>${place.note}</div>`)
+        .bindTooltip(place.stat)
+        .addTo(populationLayer);
+      registerLegendTarget("EST", marker, populationLayer, place.name);
+    });
+
+    document.querySelectorAll("[data-jump]").forEach((button) => {
+      button.addEventListener("click", () => {
+        jumpToLegendTarget(button.dataset.jump);
+      });
+    });
+
+    document.querySelectorAll("[data-commute]").forEach((button) => {
+      button.addEventListener("click", () => {
+        focusCommute(button.dataset.commute);
+      });
+    });
+
+    const list = document.getElementById("segmentList");
+    segments.forEach((segment) => {
+      const card = document.createElement("button");
+      card.className = "segment-card";
+      card.style.borderLeftColor = segment.color;
+      card.innerHTML = `<strong>${segment.name}</strong><span>${segment.crashes} tracked nearby crashes · ${segment.injured} injured<br>${segment.summary}</span>`;
+      card.addEventListener("click", () => {
+        if (!map.hasLayer(segmentLayer)) {
+          segmentLayer.addTo(map);
+        }
+        routeFocusLayer.clearLayers();
+        clearSegmentFocus();
+        card.classList.add("active");
+        const line = segmentPolylines[segment.id];
+        line.setStyle({ color: "#8b1a1a", weight: 8, opacity: 0.92, dashArray: null });
+        line.bringToFront();
+        map.fitBounds(line.getBounds(), { padding: [40, 40], maxZoom: 16 });
+        line.openPopup();
+      });
+      segmentCards[segment.id] = card;
+      list.appendChild(card);
+    });
+
+    L.control.layers(
+      {},
+      {
+        "Crash summary locations": crashLayer,
+        "Combined corridor bands": aggregateLayer,
+        "Optional block-detail lines": segmentLayer,
+        "Chesterton zero-crash comparison": comparisonLayer,
+        "Destinations": kidLayer,
+        "Focused child routes": routeFocusLayer,
+        "Key schools: Boulevard / Middle / HB": keySchoolLayer,
+        "Other Shaker public schools": publicSchoolLayer,
+        "Other private schools": privateSchoolLayer,
+        "Nearby children estimate": populationLayer
+      },
+      { collapsed: true }
+    ).addTo(map);
+
+    const updateBandDetailVisibility = () => {
+      const showAggregate = map.getZoom() < 13;
+      if (showAggregate && !map.hasLayer(aggregateLayer)) {
+        aggregateLayer.addTo(map);
+      }
+      if (!showAggregate && map.hasLayer(aggregateLayer)) {
+        map.removeLayer(aggregateLayer);
+      }
+    };
+
+    map.on("zoomend", updateBandDetailVisibility);
+    updateBandDetailVisibility();
+
+    const allBounds = L.latLngBounds([]);
+    segments.forEach((segment) => segment.points.forEach((point) => allBounds.extend(point)));
+    kidDestinations.forEach((place) => allBounds.extend([place.lat, place.lng]));
+    publicSchools
+      .filter((school) => school.type === "assigned" || school.type === "priority-public")
+      .forEach((school) => allBounds.extend([school.lat, school.lng]));
+    privateSchools
+      .filter((school) => school.name === "Hathaway Brown School")
+      .forEach((school) => allBounds.extend([school.lat, school.lng]));
+    map.fitBounds(allBounds, { padding: [42, 42], maxZoom: 14 });
+  </script>
+</body>
+</html>
