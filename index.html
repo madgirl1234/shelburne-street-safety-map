@@ -298,7 +298,50 @@
       color: #5e431c;
     }
 
-    .note h2 {
+    .mobile-actions {
+      display: none;
+    }
+
+    details.collapsible {
+      margin-top: 20px;
+    }
+
+    details.collapsible summary {
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    details.collapsible summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.collapsible summary h2 {
+      display: inline-block;
+      margin: 0 0 10px;
+    }
+
+    details.collapsible summary::after {
+      content: "Hide";
+      float: right;
+      margin-top: 1px;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fffefb;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    details.collapsible:not([open]) summary::after {
+      content: "Show";
+    }
+
+    .note h2,
+    details.collapsible > h2 {
       margin: 0 0 8px;
     }
 
@@ -438,21 +481,188 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
-    @media (max-width: 560px) {
-      .shell {
-        grid-template-columns: 1fr;
+    @media (max-width: 700px) {
+      html,
+      body {
         height: auto;
+        min-height: 100%;
+        background: var(--paper);
+      }
+
+      .shell {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 100svh;
       }
 
       aside {
+        order: 1;
         max-height: none;
         border-right: 0;
         border-bottom: 1px solid var(--line);
+        padding: 16px 14px 14px;
+      }
+
+      h1 {
+        font-size: 27px;
+        line-height: 1.05;
+      }
+
+      h2,
+      details.collapsible summary h2 {
+        margin: 16px 0 8px;
+        font-size: 12px;
+      }
+
+      .intro-list {
+        margin: 12px 0;
+        gap: 7px;
+        font-size: 13px;
+      }
+
+      .intro-list li:nth-child(3) {
+        display: none;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0 10px;
+      }
+
+      .stat {
+        min-height: 68px;
+        padding: 9px;
+      }
+
+      .stat b {
+        font-size: 20px;
+      }
+
+      .stat span {
+        font-size: 10.5px;
+      }
+
+      .mobile-actions {
+        position: sticky;
+        top: 0;
+        z-index: 500;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 10px -14px 4px;
+        padding: 8px 14px;
+        background: rgba(255, 250, 242, 0.96);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid rgba(216, 207, 192, 0.7);
+        border-bottom: 1px solid rgba(216, 207, 192, 0.7);
+      }
+
+      .mobile-actions a {
+        min-height: 38px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      details.collapsible {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fffefb;
+      }
+
+      details.collapsible summary {
+        padding: 0 10px;
+      }
+
+      details.collapsible summary h2 {
+        margin: 11px 0;
+      }
+
+      details.collapsible summary::after {
+        margin-top: 9px;
+      }
+
+      details.collapsible > :not(summary) {
+        margin: 0 10px 10px;
+      }
+
+      .note {
+        padding: 0;
+      }
+
+      .note-list,
+      .legend,
+      .segment-list {
+        font-size: 12px;
+      }
+
+      .commute-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .commute-button {
+        min-height: 48px;
+        padding: 8px;
+        border-left-width: 4px;
+      }
+
+      .commute-button strong {
+        font-size: 12px;
+      }
+
+      .commute-button span {
+        font-size: 10px;
+      }
+
+      .segment-card strong {
+        font-size: 12px;
+      }
+
+      .segment-card span {
+        font-size: 11px;
       }
 
       #map {
-        height: 70vh;
-        min-height: 520px;
+        order: 2;
+        height: 78svh;
+        min-height: 540px;
+        border-top: 1px solid var(--line);
+      }
+
+      .leaflet-control-layers {
+        max-width: calc(100vw - 24px);
+        font-size: 12px;
+      }
+
+      .leaflet-control-layers-expanded {
+        max-height: 48svh;
+        overflow: auto;
+      }
+
+      .popup {
+        width: min(245px, 78vw);
+      }
+
+      .band-label {
+        max-width: 112px;
+        font-size: 9px;
+      }
+
+      .kid-marker {
+        min-width: 30px;
+        height: 22px;
+        padding: 3px 6px;
+        font-size: 9px;
       }
     }
   </style>
@@ -474,8 +684,13 @@
         <div class="stat"><b>~650</b><span>estimated children, using Shaker's under-18 share</span></div>
       </div>
 
-      <div class="note">
-        <h2>Key Context</h2>
+      <nav class="mobile-actions" aria-label="Mobile shortcuts">
+        <a href="#map">View map</a>
+        <a href="#commuteFocus">Choose route</a>
+      </nav>
+
+      <details class="note collapsible" open>
+        <summary><h2>Key Context</h2></summary>
         <ul class="note-list">
           <li><b>Crash records:</b> Ohio public crash records for 2021-2025.</li>
           <li><b>Tracked crashes:</b> 285 crashes at the mapped corridor locations; 103 people injured.</li>
@@ -484,21 +699,26 @@
           <li><b>School anchors:</b> Boulevard Elementary, Shaker Middle, and Hathaway Brown are shown by default.</li>
           <li><b>Optional layers:</b> Turn on other public schools, other private schools, and population estimates from the layer button.</li>
         </ul>
-      </div>
+      </details>
 
-      <h2>Commute Focus</h2>
-      <div class="commute-list">
-        <button class="commute-button" data-commute="Boulevard Elementary School" type="button"><strong>Boulevard Elementary</strong><span>BLVD</span></button>
-        <button class="commute-button" data-commute="Hathaway Brown School" type="button"><strong>Hathaway Brown</strong><span>HB</span></button>
-        <button class="commute-button" data-commute="University School, Shaker Campus" type="button"><strong>University School</strong><span>US</span></button>
-        <button class="commute-button" data-commute="Shaker Heights Middle School" type="button"><strong>Shaker Middle</strong><span>MID</span></button>
-      </div>
+      <section id="commuteFocus">
+        <h2>Commute Focus</h2>
+        <div class="commute-list">
+          <button class="commute-button" data-commute="Boulevard Elementary School" type="button"><strong>Boulevard Elementary</strong><span>BLVD</span></button>
+          <button class="commute-button" data-commute="Hathaway Brown School" type="button"><strong>Hathaway Brown</strong><span>HB</span></button>
+          <button class="commute-button" data-commute="University School, Shaker Campus" type="button"><strong>University School</strong><span>US</span></button>
+          <button class="commute-button" data-commute="Shaker Heights Middle School" type="button"><strong>Shaker Middle</strong><span>MID</span></button>
+        </div>
+      </section>
 
-      <h2>Block Breakdown</h2>
-      <div class="segment-list" id="segmentList"></div>
+      <details class="collapsible" open>
+        <summary><h2>Block Breakdown</h2></summary>
+        <div class="segment-list" id="segmentList"></div>
+      </details>
 
-      <h2>Map Legend</h2>
-      <div class="legend">
+      <details class="collapsible" open>
+        <summary><h2>Map Legend</h2></summary>
+        <div class="legend">
         <div class="legend-subhead">Map Layers</div>
         <div class="legend-row"><span class="swatch" style="background: var(--red)"></span> Crash marker sized by crash count</div>
         <div class="legend-row"><span class="swatch line" style="background: #8b1a1a; height:8px;"></span> Combined corridor band shown at overview zoom</div>
@@ -518,7 +738,8 @@
         <button class="legend-row legend-jump" data-jump="SCH" type="button"><span class="legend-pin" style="border-color:#1d4ed8;color:#1d4ed8;">SCH</span> Other Shaker public school, optional layer</button>
         <button class="legend-row legend-jump" data-jump="PVT" type="button"><span class="legend-pin" style="border-color:#8b5cf6;color:#5b21b6;">PVT</span> Other private/parochial school, optional layer</button>
         <button class="legend-row legend-jump" data-jump="EST" type="button"><span class="legend-pin" style="border-color:#0f766e;color:#0f766e;">EST</span> Nearby child/resident estimate, optional layer</button>
-      </div>
+        </div>
+      </details>
     </aside>
 
     <section id="map" aria-label="Shelburne street safety map showing crashes, schools, destinations, and barrier areas"></section>
@@ -1155,6 +1376,26 @@
     document.querySelectorAll("[data-commute]").forEach((button) => {
       button.addEventListener("click", () => {
         focusCommute(button.dataset.commute);
+        if (window.matchMedia("(max-width: 700px)").matches) {
+          document.getElementById("map").scrollIntoView({ behavior: "auto", block: "start" });
+          setTimeout(() => map.invalidateSize(), 120);
+        }
+      });
+    });
+
+    const mobileQuery = window.matchMedia("(max-width: 700px)");
+    const setMobileDisclosureState = () => {
+      document.querySelectorAll("details.collapsible").forEach((details) => {
+        details.open = !mobileQuery.matches;
+      });
+      setTimeout(() => map.invalidateSize(), 80);
+    };
+    setMobileDisclosureState();
+    mobileQuery.addEventListener("change", setMobileDisclosureState);
+
+    document.querySelectorAll(".mobile-actions a").forEach((link) => {
+      link.addEventListener("click", () => {
+        setTimeout(() => map.invalidateSize(), 280);
       });
     });
 
