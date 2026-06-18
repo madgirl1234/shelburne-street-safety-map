@@ -127,6 +127,16 @@
       gap: 9px;
     }
 
+    .summary-guide {
+      margin: 0 0 10px;
+      padding-left: 18px;
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     .segment-card {
       width: 100%;
       text-align: left;
@@ -151,6 +161,13 @@
       box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.15);
     }
 
+    .segment-card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
     .segment-card strong {
       display: block;
       font-size: 13px;
@@ -158,12 +175,67 @@
       color: var(--ink);
     }
 
-    .segment-card span {
+    .segment-action {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 7px;
+      background: #fffefb;
+      color: #6c4a16;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .segment-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 9px;
+    }
+
+    .segment-metric {
+      border: 1px solid #ead7b7;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 7px 8px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.15;
+    }
+
+    .segment-metric b {
+      display: block;
+      margin-bottom: 2px;
+      color: #812020;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .segment-summary,
+    .segment-more {
       display: block;
       margin-top: 4px;
       font-size: 12px;
       line-height: 1.35;
       color: var(--muted);
+    }
+
+    .segment-more {
+      display: none;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #ead7b7;
+    }
+
+    .segment-card.active .segment-more {
+      display: block;
+    }
+
+    .segment-card.active .segment-action {
+      border-color: #8b1a1a;
+      color: #8b1a1a;
     }
 
     .commute-list {
@@ -601,7 +673,8 @@
 
       .note-list,
       .legend,
-      .segment-list {
+      .segment-list,
+      .summary-guide {
         font-size: 12px;
       }
 
@@ -628,7 +701,30 @@
         font-size: 12px;
       }
 
-      .segment-card span {
+      .segment-card-top {
+        display: grid;
+        gap: 7px;
+      }
+
+      .segment-action {
+        justify-self: start;
+      }
+
+      .segment-metrics {
+        gap: 6px;
+      }
+
+      .segment-metric {
+        padding: 6px 7px;
+        font-size: 10.5px;
+      }
+
+      .segment-metric b {
+        font-size: 17px;
+      }
+
+      .segment-summary,
+      .segment-more {
         font-size: 11px;
       }
 
@@ -712,7 +808,12 @@
       </section>
 
       <details class="collapsible" open>
-        <summary><h2>Block Breakdown</h2></summary>
+        <summary><h2>Crash Summary by Area</h2></summary>
+        <ul class="summary-guide">
+          <li>Use these cards for the main takeaways.</li>
+          <li>Click a card to highlight that area on the map.</li>
+          <li>The popup shows the fuller note and possible next step.</li>
+        </ul>
         <div class="segment-list" id="segmentList"></div>
       </details>
 
@@ -722,7 +823,7 @@
         <div class="legend-subhead">Map Layers</div>
         <div class="legend-row"><span class="swatch" style="background: var(--red)"></span> Crash marker sized by crash count</div>
         <div class="legend-row"><span class="swatch line" style="background: #8b1a1a; height:8px;"></span> Combined corridor band shown at overview zoom</div>
-        <div class="legend-row"><span class="swatch line dashed" style="background: var(--blue)"></span> Optional block-detail line</div>
+        <div class="legend-row"><span class="swatch line dashed" style="background: var(--blue)"></span> Optional area detail line</div>
         <div class="legend-row"><span class="swatch line dashed" style="color:#0f7a8a;background:#0f7a8a"></span> Focused child-route connector shown after pin click</div>
         <div class="legend-row"><span class="swatch" style="background: #eefbf4; border: 2px solid #16784f"></span> Comparison treatment: Chesterton one-way / modal filter</div>
         <div class="legend-row"><span class="swatch" style="background: rgba(22, 120, 79, 0.18); border: 2px solid var(--green)"></span> 0.5-mile neighborhood destination area</div>
@@ -755,7 +856,7 @@
     }).addTo(map);
 
     const crashLocations = [
-      { name: "Fairmount Circle", lat: 41.4905, lng: -81.5371, crashes: 74, injured: 16, note: "Worst tracked spot in the corridor; pedestrian hit in a marked crosswalk in Aug. 2025." },
+      { name: "Fairmount Circle area", lat: 41.4864525, lng: -81.5362695, crashes: 74, injured: 16, note: "Area marker centered on Fairmount Circle; pedestrian hit in a marked crosswalk in Aug. 2025." },
       { name: "Fairmount Blvd & Warrensville Center Rd", lat: 41.4864, lng: -81.5375, crashes: 55, injured: 26, note: "Major intersection at the Circle approach; one serious injury noted." },
       { name: "Eaton Rd & Fairmount Blvd", lat: 41.48645, lng: -81.552, crashes: 10, injured: 4, note: "West gateway to the Shelburne cut-through." },
       { name: "Fairmount Blvd & Green Rd", lat: 41.4863, lng: -81.5171, crashes: 21, injured: 7, note: "East end of Fairmount, near Fairmount Circle travel patterns." },
@@ -848,7 +949,7 @@
         crashes: 129,
         injured: 42,
         color: "#8b1a1a",
-        points: [[41.4864, -81.5375], [41.4882, -81.5372], [41.4905, -81.5371], [41.4864, -81.5375]],
+        points: [[41.48645, -81.552], [41.4864525, -81.5362695], [41.4863, -81.5171]],
         ask: "Request a rotary safety review, protected crossings, daylighting, and slower entry geometry."
       }
     ];
@@ -878,12 +979,12 @@
       },
       {
         id: "band-fairmount-circle",
-        name: "Fairmount + Circle north edge",
+        name: "Fairmount Blvd / Fairmount Circle",
         crashes: 160,
         injured: 53,
         color: "#7f1d1d",
-        labelPoint: [41.4877, -81.5377],
-        points: [[41.48645, -81.552], [41.4864, -81.5375], [41.4905, -81.5371], [41.4863, -81.5171]],
+        labelPoint: [41.4864525, -81.5362695],
+        points: [[41.48645, -81.552], [41.4864525, -81.5362695], [41.4863, -81.5171]],
         breakdown: "Fairmount Circle: 74. Fairmount & Warrensville: 55. Fairmount & Green: 21. Eaton & Fairmount: 10.",
         note: "North-edge arterial crash burden from the 2021-2025 ODOT / Shaker Heights Police crash-record summary."
       },
@@ -917,7 +1018,7 @@
       { name: "Courtland Oval at Fairmount Blvd field/park area", type: "field", label: "OVAL", lat: 41.4856714, lng: -81.5432043, dist: "about 0.4 mi", note: "Courtland Oval field/park area near Fairmount, a clear child destination on the north side of the Shelburne route." },
       { name: "Shaker Middle School athletic fields", type: "field", lat: 41.478174, lng: -81.5308639, dist: "about 0.5 mi", note: "Middle-school field area near Shaker, Warrensville, the library, and the corridor's southern crossings." },
       { name: "Byron Road Triangle Park", type: "park", lat: 41.4758252, lng: -81.5341777, dist: "about 0.6 mi", note: "Small mapped park near Bertram Woods Library and the Shaker / Warrensville crossing area." },
-      { name: "Future Trader Joe's / Fairmount Circle", type: "kid", lat: 41.4905, lng: -81.5371, dist: "0.46 mi", note: "Future everyday destination co-located with a major barrier." },
+      { name: "Future Trader Joe's / Fairmount Circle area", type: "kid", lat: 41.4864525, lng: -81.5362695, dist: "0.46 mi", note: "Future everyday destination co-located with a major barrier." },
       { name: "Bertram Woods Library Branch", type: "library", lat: 41.4764204, lng: -81.5351454, dist: "about 0.5 mi", note: "Public library branch next to the Shaker / Warrensville school-library access concern." },
       { name: "Thornton Park", type: "park", lat: 41.4692399, lng: -81.5346926, dist: "about 1.0 mi", note: "City park and recreation destination with pool, ice rink, fields, and courts." }
     ];
@@ -1020,10 +1121,10 @@
           note: "Illustrative park trip through the Shaker / Warrensville school-library crossing area."
         }
       ],
-      "Future Trader Joe's / Fairmount Circle": [
+      "Future Trader Joe's / Fairmount Circle area": [
         {
           name: "Shelburne to Fairmount Circle errand area",
-          points: [[41.4839, -81.5395], [41.4864, -81.5375], [41.4905, -81.5371]],
+          points: [[41.4839, -81.5395], [41.4864, -81.5375], [41.4864525, -81.5362695]],
           note: "Illustrative everyday-destination trip: errands at Fairmount Circle sit beside the highest crash burden in the map."
         }
       ]
@@ -1043,7 +1144,7 @@
     const segmentCards = {};
 
     const crashSegmentMatches = {
-      "Fairmount Circle": ["fairmount-circle"],
+      "Fairmount Circle area": ["fairmount-circle"],
       "Fairmount Blvd & Warrensville Center Rd": ["fairmount-circle", "shaker-middle-library"],
       "Eaton Rd & Fairmount Blvd": ["northwest-loop", "fairmount-circle"],
       "Fairmount Blvd & Green Rd": ["fairmount-circle"],
@@ -1404,7 +1505,18 @@
       const card = document.createElement("button");
       card.className = "segment-card";
       card.style.borderLeftColor = segment.color;
-      card.innerHTML = `<strong>${segment.name}</strong><span>${segment.crashes} tracked nearby crashes · ${segment.injured} injured<br>${segment.summary}</span>`;
+      card.innerHTML = `
+        <span class="segment-card-top">
+          <strong>${segment.name}</strong>
+          <span class="segment-action">Show on map</span>
+        </span>
+        <span class="segment-metrics" aria-label="${segment.crashes} crashes and ${segment.injured} people injured from 2021 to 2025">
+          <span class="segment-metric"><b>${segment.crashes}</b> crashes<br>2021-2025</span>
+          <span class="segment-metric"><b>${segment.injured}</b> injured<br>2021-2025</span>
+        </span>
+        <span class="segment-summary">${segment.summary}</span>
+        <span class="segment-more"><b>Possible next step:</b> ${segment.ask}</span>
+      `;
       card.addEventListener("click", () => {
         if (!map.hasLayer(segmentLayer)) {
           segmentLayer.addTo(map);
@@ -1427,7 +1539,7 @@
       {
         "Crash summary locations": crashLayer,
         "Combined corridor bands": aggregateLayer,
-        "Optional block-detail lines": segmentLayer,
+        "Optional area detail lines": segmentLayer,
         "Chesterton zero-crash comparison": comparisonLayer,
         "Destinations": kidLayer,
         "Focused child routes": routeFocusLayer,
