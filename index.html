@@ -1142,6 +1142,7 @@
     const routeFocusLayer = L.layerGroup().addTo(map);
     const legendTargets = {};
     const segmentCards = {};
+    let pinnedSegmentId = null;
 
     const crashSegmentMatches = {
       "Fairmount Circle area": ["fairmount-circle"],
@@ -1216,6 +1217,19 @@
           card.classList.add("active");
         }
       });
+    };
+
+    const previewSegment = (id) => {
+      if (!id) return;
+      highlightSegmentsOnly([id]);
+    };
+
+    const restorePinnedSegment = () => {
+      if (pinnedSegmentId) {
+        highlightSegmentsOnly([pinnedSegmentId]);
+      } else {
+        clearSegmentFocus();
+      }
     };
 
     const showChildRoutesForNames = (placeNames) => {
@@ -1517,7 +1531,12 @@
         <span class="segment-summary">${segment.summary}</span>
         <span class="segment-more"><b>Possible next step:</b> ${segment.ask}</span>
       `;
+      card.addEventListener("mouseenter", () => previewSegment(segment.id));
+      card.addEventListener("focus", () => previewSegment(segment.id));
+      card.addEventListener("mouseleave", restorePinnedSegment);
+      card.addEventListener("blur", restorePinnedSegment);
       card.addEventListener("click", () => {
+        pinnedSegmentId = segment.id;
         if (!map.hasLayer(segmentLayer)) {
           segmentLayer.addTo(map);
         }
@@ -1533,6 +1552,26 @@
       segmentCards[segment.id] = card;
       list.appendChild(card);
     });
+
+    if ("IntersectionObserver" in window) {
+      const cardPreviewObserver = new IntersectionObserver((entries) => {
+        if (pinnedSegmentId) return;
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target?.dataset?.segmentId) {
+          previewSegment(visible.target.dataset.segmentId);
+        }
+      }, {
+        root: document.querySelector("aside"),
+        threshold: [0.45, 0.65, 0.85]
+      });
+
+      Object.entries(segmentCards).forEach(([id, card]) => {
+        card.dataset.segmentId = id;
+        cardPreviewObserver.observe(card);
+      });
+    }
 
     L.control.layers(
       {},
