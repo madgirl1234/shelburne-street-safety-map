@@ -166,33 +166,37 @@ def draw_shaker_map(c, x, y, w, h):
     pill(c, x + w * 0.75, y + 22, 28, 18, "US", stroke=TEAL, text_color=TEAL)
 
 
-def panel(c, x, y, w, h, title, subtitle, stats, draw_map, note):
+def summary_panel(c, x, y, w, h, title, subtitle, stats, note):
     c.setFillColor(colors.white)
     c.setStrokeColor(LINE)
     c.roundRect(x, y, w, h, 12, stroke=1, fill=1)
     c.setFillColor(INK)
-    c.setFont("Helvetica-Bold", 13.5)
+    c.setFont("Helvetica-Bold", 14)
     c.drawString(x + 13, y + h - 22, title)
-    wrap_text(c, subtitle, x + 13, y + h - 37, w - 26, font="Helvetica", size=8.5, leading=10, color=MUTED)
+    wrap_text(c, subtitle, x + 13, y + h - 38, w - 26, font="Helvetica", size=9, leading=11, color=MUTED)
 
-    map_h = 96
-    map_w = w * 0.47
-    draw_map(c, x + 13, y + h - 158, map_w, map_h)
-
-    stat_x = x + 28 + map_w
-    stat_y = y + h - 112
-    gap = 7
-    box_w = (w - map_w - 45 - gap * (len(stats) - 1)) / len(stats)
+    stat_y = y + h - 102
+    gap = 9
+    box_w = (w - 26 - gap * (len(stats) - 1)) / len(stats)
     for i, (value, label) in enumerate(stats):
-        stat_box(c, stat_x + i * (box_w + gap), stat_y, box_w, 50, value, label)
+        stat_box(c, x + 13 + i * (box_w + gap), stat_y, box_w, 56, value, label)
 
-    wrap_text(c, note, x + 13, y + 17, w - 26, font="Helvetica", size=8.5, leading=10, color=INK)
+    wrap_text(c, note, x + 13, y + 21, w - 26, font="Helvetica", size=9, leading=11, color=INK)
 
 
-def build():
-    c = canvas.Canvas(str(PDF_PATH), pagesize=letter)
-    c.setTitle("Shelburne Street Safety - Three Priority Areas")
+def map_panel(c, x, y, w, h, title, subtitle, draw_map, note):
+    c.setFillColor(colors.white)
+    c.setStrokeColor(LINE)
+    c.roundRect(x, y, w, h, 12, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(x + 13, y + h - 22, title)
+    wrap_text(c, subtitle, x + 13, y + h - 38, w - 26, font="Helvetica", size=9, leading=11, color=MUTED)
+    draw_map(c, x + 13, y + 53, w - 26, h - 102)
+    wrap_text(c, note, x + 13, y + 22, w - 26, font="Helvetica", size=8.5, leading=10, color=INK)
 
+
+def header(c, subtitle):
     c.setFillColor(PAPER)
     c.rect(0, 0, W, H, stroke=0, fill=1)
 
@@ -201,7 +205,7 @@ def build():
     c.drawString(M, H - 42, "Three Priority Safety Areas")
     c.setFont("Helvetica", 10)
     c.setFillColor(MUTED)
-    c.drawString(M, H - 58, "Shelburne Street Safety Map summary for quick review")
+    c.drawString(M, H - 58, subtitle)
 
     c.setFillColor(RED_LIGHT)
     c.setStrokeColor(RED)
@@ -210,51 +214,8 @@ def build():
     c.setFont("Helvetica-Bold", 12)
     c.drawCentredString(W - M - 88, H - 48, "2021-2025 crash records")
 
-    panel_w = W - 2 * M
-    panel_h = 186
-    y1 = H - 82 - panel_h
-    y2 = y1 - panel_h - 12
-    y3 = y2 - panel_h - 12
 
-    panel(
-        c,
-        M,
-        y1,
-        panel_w,
-        panel_h,
-        "1. Shelburne cut-through",
-        "Crash burden is higher on the residential cut-through section closer to Warrensville, Courtland, and North Park.",
-        [("40", "to Warrensville crashes"), ("16", "injured on that section"), ("16 / 8", "crashes / injured after Warrensville")],
-        draw_shelburne_map,
-        "Use this as the clearest comparison: Shelburne to Warrensville has 40 crashes / 16 injured, while Shelburne after Warrensville to Green has 16 crashes / 8 injured.",
-    )
-
-    panel(
-        c,
-        M,
-        y2,
-        panel_w,
-        panel_h,
-        "2. Fairmount Circle / Fairmount Blvd",
-        "High-crash everyday destination area near CVS, food, Fairmount Circle, and future Trader Joe's.",
-        [("74 / 16", "Circle area crashes / injured"), ("55 / 26", "Fairmount + Warrensville"), ("160 / 53", "Fairmount corridor total")],
-        draw_fairmount_map,
-        "This is not only a traffic location. It is an errand and family destination area where walking and biking should be practical.",
-    )
-
-    panel(
-        c,
-        M,
-        y3,
-        panel_w,
-        panel_h,
-        "3. Shaker / Warrensville by school + library",
-        "Major crossing area next to Shaker Middle, Bertram Woods Library, University School, transit, and fields.",
-        [("61 / 25", "Warrensville + Shaker"), ("113 / 44", "school/library corridor"), ("0", "Chesterton comparison crashes")],
-        draw_shaker_map,
-        "This area is a school, library, transit, and field access concern, not just an arterial traffic issue.",
-    )
-
+def footer(c):
     footer_y = 28
     c.setFillColor(colors.white)
     c.setStrokeColor(LINE)
@@ -267,6 +228,99 @@ def build():
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 7.5)
     c.drawString(M + 11, footer_y + 8, "Source: Ohio public crash records, 2021-2025. Interactive map: https://madgirl1234.github.io/shelburne-street-safety-map/")
+
+
+def build():
+    c = canvas.Canvas(str(PDF_PATH), pagesize=letter)
+    c.setTitle("Shelburne Street Safety - Three Priority Areas")
+
+    header(c, "Page 1 of 2 - quick numbers for email review")
+
+    panel_w = W - 2 * M
+    panel_h = 160
+    y1 = H - 82 - panel_h
+    y2 = y1 - panel_h - 12
+    y3 = y2 - panel_h - 12
+
+    summary_panel(
+        c,
+        M,
+        y1,
+        panel_w,
+        panel_h,
+        "1. Shelburne cut-through",
+        "Crash burden is higher on the residential cut-through section closer to Warrensville, Courtland, and North Park.",
+        [("40", "to Warrensville crashes"), ("16", "injured on that section"), ("16 / 8", "crashes / injured after Warrensville")],
+        "Use this as the clearest comparison: Shelburne to Warrensville has 40 crashes / 16 injured, while Shelburne after Warrensville to Green has 16 crashes / 8 injured.",
+    )
+
+    summary_panel(
+        c,
+        M,
+        y2,
+        panel_w,
+        panel_h,
+        "2. Fairmount Circle / Fairmount Blvd",
+        "High-crash everyday destination area near CVS, food, Fairmount Circle, and future Trader Joe's.",
+        [("74 / 16", "Circle area crashes / injured"), ("55 / 26", "Fairmount + Warrensville"), ("160 / 53", "Fairmount corridor total")],
+        "This is not only a traffic location. It is an errand and family destination area where walking and biking should be practical.",
+    )
+
+    summary_panel(
+        c,
+        M,
+        y3,
+        panel_w,
+        panel_h,
+        "3. Shaker / Warrensville by school + library",
+        "Major crossing area next to Shaker Middle, Bertram Woods Library, University School, transit, and fields.",
+        [("61 / 25", "Warrensville + Shaker"), ("113 / 44", "school/library corridor"), ("0", "Chesterton comparison crashes")],
+        "This area is a school, library, transit, and field access concern, not just an arterial traffic issue.",
+    )
+
+    footer(c)
+    c.showPage()
+
+    header(c, "Page 2 of 2 - larger map views")
+    map_h = 190
+    my1 = H - 82 - map_h
+    my2 = my1 - map_h - 12
+    my3 = my2 - map_h - 12
+
+    map_panel(
+        c,
+        M,
+        my1,
+        panel_w,
+        map_h,
+        "1. Shelburne cut-through",
+        "The comparison is visible along Shelburne: 40 crashes / 16 injured before Warrensville, compared with 16 crashes / 8 injured after Warrensville.",
+        draw_shelburne_map,
+        "Priority point: the residential cut-through section carries the higher crash burden.",
+    )
+    map_panel(
+        c,
+        M,
+        my2,
+        panel_w,
+        map_h,
+        "2. Fairmount Circle / Fairmount Blvd",
+        "Fairmount Circle, Fairmount + Warrensville, and the Fairmount corridor show high crash and injury totals around everyday destinations.",
+        draw_fairmount_map,
+        "Priority point: this is a family errand area, not only a driver route.",
+    )
+    map_panel(
+        c,
+        M,
+        my3,
+        panel_w,
+        map_h,
+        "3. Shaker / Warrensville by school + library",
+        "The school/library corridor is where Shaker Middle, Bertram Woods Library, University School, transit, and fields overlap with high crash totals.",
+        draw_shaker_map,
+        "Priority point: kids and families need safer crossings through this school/library access area.",
+    )
+    footer(c)
 
     c.save()
     print(PDF_PATH)
