@@ -37,7 +37,7 @@
 
     .shell {
       display: grid;
-      grid-template-columns: minmax(280px, clamp(300px, 32vw, 420px)) minmax(0, 1fr);
+      grid-template-columns: minmax(260px, clamp(280px, 28vw, 380px)) minmax(0, 1fr);
       height: 100vh;
       min-height: 720px;
     }
@@ -613,7 +613,7 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 900px) {
       html,
       body {
         height: auto;
@@ -629,10 +629,10 @@
       }
 
       aside {
-        order: 1;
+        order: 2;
         max-height: none;
         border-right: 0;
-        border-bottom: 1px solid var(--line);
+        border-top: 1px solid var(--line);
         padding: 16px 14px 14px;
       }
 
@@ -808,10 +808,10 @@
       }
 
       #map {
-        order: 2;
-        height: 78svh;
-        min-height: 540px;
-        border-top: 1px solid var(--line);
+        order: 1;
+        height: 62svh;
+        min-height: 430px;
+        border-bottom: 1px solid var(--line);
       }
 
       .leaflet-control-layers {
