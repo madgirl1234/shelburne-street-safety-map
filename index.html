@@ -969,6 +969,26 @@
         <button class="comparison-action" data-comparison="shelburne" type="button">Show only this comparison on the map</button>
       </section>
 
+      <section class="comparison-panel" aria-labelledby="connectorComparisonHeading">
+        <h2 id="connectorComparisonHeading">Fairmount / North Park Connector Blocks</h2>
+        <p class="comparison-note">2021-2025 crash summaries for the neighborhood connector blocks feeding Shelburne, North Park, Courtland, and Fairmount.</p>
+        <div class="comparison-bars" aria-label="Connector block crash summaries, 2021-2025">
+          <div>
+            <div class="comparison-bar-label"><span>Eaton-Fairmount / Eaton-Shelburne / Courtland-Fairmount</span><b>20 crashes / 6 injured</b></div>
+            <div class="comparison-track"><div class="comparison-fill" style="width: 100%"></div></div>
+          </div>
+          <div>
+            <div class="comparison-bar-label"><span>Shelburne: Courtland to North Park / Chesterton</span><b>9 crashes / 2 injured</b></div>
+            <div class="comparison-track"><div class="comparison-fill secondary" style="width: 45%"></div></div>
+          </div>
+          <div>
+            <div class="comparison-bar-label"><span>North Park / Shelburne to Sherbrooke to Courtland</span><b>1 crash / 0 injured</b></div>
+            <div class="comparison-track"><div class="comparison-fill secondary" style="width: 8%"></div></div>
+          </div>
+        </div>
+        <button class="comparison-action" data-comparison="connectors" type="button">Show these connector blocks on the map</button>
+      </section>
+
       <section aria-labelledby="priorityHeading">
         <h2 id="priorityHeading">Priority Areas</h2>
         <div class="priority-grid">
@@ -1450,6 +1470,36 @@
       }
     };
 
+    const focusConnectorBlocks = () => {
+      if (!map.hasLayer(segmentLayer)) {
+        segmentLayer.addTo(map);
+      }
+      routeFocusLayer.clearLayers();
+      pinnedSegmentId = null;
+      clearSegmentFocus();
+
+      const connectorStyles = {
+        "northwest-loop": { color: "#8b1a1a", weight: 8, opacity: 0.95 },
+        "courtland-to-npark": { color: "#5b6ee1", weight: 7, opacity: 0.9 },
+        "npark-sherbrooke-courtland": { color: "#7c5cc4", weight: 7, opacity: 0.9 }
+      };
+      const bounds = L.latLngBounds([]);
+      Object.entries(connectorStyles).forEach(([id, style]) => {
+        const line = segmentPolylines[id];
+        const card = segmentCards[id];
+        if (!line) return;
+        line.setStyle({ ...style, dashArray: null });
+        line.bringToFront();
+        line.getLatLngs().forEach((point) => bounds.extend(point));
+        if (card) {
+          card.classList.add("active");
+        }
+      });
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [54, 54], maxZoom: 15 });
+      }
+    };
+
     const previewSegment = (id) => {
       if (!id) return;
       highlightSegmentsOnly([id]);
@@ -1746,6 +1796,16 @@
     document.querySelectorAll("[data-comparison='shelburne']").forEach((button) => {
       button.addEventListener("click", () => {
         focusShelburneComparison();
+        if (window.matchMedia("(max-width: 900px)").matches) {
+          document.getElementById("map").scrollIntoView({ behavior: "auto", block: "start" });
+          setTimeout(() => map.invalidateSize(), 120);
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-comparison='connectors']").forEach((button) => {
+      button.addEventListener("click", () => {
+        focusConnectorBlocks();
         if (window.matchMedia("(max-width: 900px)").matches) {
           document.getElementById("map").scrollIntoView({ behavior: "auto", block: "start" });
           setTimeout(() => map.invalidateSize(), 120);
