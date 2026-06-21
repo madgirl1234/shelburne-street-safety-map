@@ -122,6 +122,84 @@
       color: var(--muted);
     }
 
+    .comparison-panel {
+      border: 1px solid #ead7b7;
+      border-left: 7px solid #8b1a1a;
+      border-radius: 8px;
+      background: #fffefb;
+      padding: 12px;
+      margin: 8px 0 18px;
+    }
+
+    .comparison-panel h2 {
+      margin-top: 0;
+    }
+
+    .comparison-note {
+      margin: 0 0 11px;
+      font-size: 13px;
+      line-height: 1.35;
+      color: #283243;
+    }
+
+    .comparison-bars {
+      display: grid;
+      gap: 10px;
+    }
+
+    .comparison-bar-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+
+    .comparison-bar-label b {
+      color: #8b1a1a;
+      white-space: nowrap;
+    }
+
+    .comparison-track {
+      height: 13px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #ead7b7;
+    }
+
+    .comparison-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: #8b1a1a;
+    }
+
+    .comparison-fill.secondary {
+      background: #2f8d46;
+    }
+
+    .comparison-action {
+      width: 100%;
+      margin-top: 12px;
+      border: 1px solid #8b1a1a;
+      border-radius: 8px;
+      background: #fff7ed;
+      color: #8b1a1a;
+      padding: 9px 10px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .comparison-action:hover,
+    .comparison-action:focus {
+      outline: 2px solid rgba(185, 28, 28, 0.22);
+      outline-offset: 1px;
+    }
+
     .priority-grid {
       display: grid;
       gap: 9px;
@@ -695,6 +773,17 @@
         font-size: 11px;
       }
 
+      .comparison-panel {
+        margin-bottom: 14px;
+        padding: 10px;
+      }
+
+      .comparison-note,
+      .comparison-bar-label,
+      .comparison-action {
+        font-size: 11px;
+      }
+
       .mobile-actions {
         position: sticky;
         top: 0;
@@ -848,7 +937,7 @@
       <h1>Shelburne Street Safety Map</h1>
       <ul class="intro-list">
         <li><b>Crash pattern:</b> Shelburne cut-through traffic, Fairmount Circle, and Shaker/Warrensville by schools and library stand out for review.</li>
-        <li><b>Child destinations:</b> crash counts are shown near schools, fields, parks, library access, and everyday destinations.</li>
+        <li><b>Child destinations:</b> optional layers show schools, fields, parks, library access, and everyday destinations.</li>
         <li><b>Area breakdown:</b> priority cards summarize the main locations; detailed cards and legend are below for the full breakdown.</li>
       </ul>
 
@@ -863,6 +952,22 @@
         <a href="#map">View map</a>
         <a href="#commuteFocus">Choose route</a>
       </nav>
+
+      <section class="comparison-panel" aria-labelledby="shelburneComparisonHeading">
+        <h2 id="shelburneComparisonHeading">Shelburne Cut-Through Comparison</h2>
+        <p class="comparison-note">Same street, same 2021-2025 timeframe. The western Shelburne segment shows about 2.5x the crashes of the eastern segment.</p>
+        <div class="comparison-bars" aria-label="Shelburne crash comparison, 2021-2025">
+          <div>
+            <div class="comparison-bar-label"><span>Fairmount/Eaton to Warrensville</span><b>40 crashes</b></div>
+            <div class="comparison-track"><div class="comparison-fill" style="width: 100%"></div></div>
+          </div>
+          <div>
+            <div class="comparison-bar-label"><span>Warrensville to Green</span><b>16 crashes</b></div>
+            <div class="comparison-track"><div class="comparison-fill secondary" style="width: 40%"></div></div>
+          </div>
+        </div>
+        <button class="comparison-action" data-comparison="shelburne" type="button">Show only this comparison on the map</button>
+      </section>
 
       <section aria-labelledby="priorityHeading">
         <h2 id="priorityHeading">Priority Areas</h2>
@@ -1231,8 +1336,8 @@
     const aggregateLayer = L.layerGroup().addTo(map);
     const segmentLayer = L.layerGroup();
     const comparisonLayer = L.layerGroup().addTo(map);
-    const kidLayer = L.layerGroup().addTo(map);
-    const keySchoolLayer = L.layerGroup().addTo(map);
+    const kidLayer = L.layerGroup();
+    const keySchoolLayer = L.layerGroup();
     const publicSchoolLayer = L.layerGroup();
     const privateSchoolLayer = L.layerGroup();
     const populationLayer = L.layerGroup();
@@ -1314,6 +1419,35 @@
           card.classList.add("active");
         }
       });
+    };
+
+    const focusShelburneComparison = () => {
+      if (!map.hasLayer(segmentLayer)) {
+        segmentLayer.addTo(map);
+      }
+      routeFocusLayer.clearLayers();
+      pinnedSegmentId = null;
+      clearSegmentFocus();
+
+      const comparisonStyles = {
+        "shelburne-to-warrensville": { color: "#8b1a1a", weight: 9, opacity: 0.95 },
+        "warrensville-to-green": { color: "#2f8d46", weight: 7, opacity: 0.9 }
+      };
+      const bounds = L.latLngBounds([]);
+      Object.entries(comparisonStyles).forEach(([id, style]) => {
+        const line = segmentPolylines[id];
+        const card = segmentCards[id];
+        if (!line) return;
+        line.setStyle({ ...style, dashArray: null });
+        line.bringToFront();
+        line.getLatLngs().forEach((point) => bounds.extend(point));
+        if (card) {
+          card.classList.add("active");
+        }
+      });
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [54, 54], maxZoom: 15 });
+      }
     };
 
     const previewSegment = (id) => {
@@ -1609,6 +1743,16 @@
       });
     });
 
+    document.querySelectorAll("[data-comparison='shelburne']").forEach((button) => {
+      button.addEventListener("click", () => {
+        focusShelburneComparison();
+        if (window.matchMedia("(max-width: 900px)").matches) {
+          document.getElementById("map").scrollIntoView({ behavior: "auto", block: "start" });
+          setTimeout(() => map.invalidateSize(), 120);
+        }
+      });
+    });
+
     const mobileQuery = window.matchMedia("(max-width: 700px)");
     const setMobileDisclosureState = () => {
       document.querySelectorAll("details.collapsible").forEach((details) => {
@@ -1723,13 +1867,6 @@
 
     const allBounds = L.latLngBounds([]);
     segments.forEach((segment) => segment.points.forEach((point) => allBounds.extend(point)));
-    kidDestinations.forEach((place) => allBounds.extend([place.lat, place.lng]));
-    publicSchools
-      .filter((school) => school.type === "assigned" || school.type === "priority-public")
-      .forEach((school) => allBounds.extend([school.lat, school.lng]));
-    privateSchools
-      .filter((school) => school.name === "Hathaway Brown School")
-      .forEach((school) => allBounds.extend([school.lat, school.lng]));
     map.fitBounds(allBounds, { padding: [42, 42], maxZoom: 14 });
   </script>
 </body>
